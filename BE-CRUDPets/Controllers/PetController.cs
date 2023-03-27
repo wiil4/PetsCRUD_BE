@@ -50,5 +50,25 @@ namespace BE_CRUDPets.Controllers
             }
         }
 
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                var pet = await _context.Pets.FindAsync(id);
+                if (pet == null)
+                {
+                    return NotFound();
+                }
+                _context.Pets.Remove(pet);
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch(Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
     }
 }
