@@ -86,5 +86,35 @@ namespace BE_CRUDPets.Controllers
             }
         }
 
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Put(int id, Pet pet)
+        {
+            try
+            {
+                if (id != pet.Id)
+                {
+                    return BadRequest();
+                }
+
+                var petItem = await _context.Pets.FindAsync(id);
+                if (petItem == null)
+                {
+                    return NotFound();
+                }
+                petItem.Name = pet.Name;
+                petItem.Race = pet.Race;
+                petItem.Color = pet.Color;
+                petItem.Age = pet.Age;
+                petItem.Weight = pet.Weight;
+
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch(Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
     }
 }
