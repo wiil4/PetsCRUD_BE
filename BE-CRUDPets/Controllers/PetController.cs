@@ -70,5 +70,21 @@ namespace BE_CRUDPets.Controllers
             }
         }
 
+        [HttpPost]
+        public async Task<IActionResult> Post([FromBody] Pet pet)
+        {
+            try
+            {
+                pet.CreationDate = DateTime.Now;
+                _context.Add(pet);
+                await _context.SaveChangesAsync();
+                return CreatedAtAction("Get",new {id = pet.Id}, pet);
+            }
+            catch(Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
     }
 }
