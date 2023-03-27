@@ -1,4 +1,6 @@
-﻿using BE_CRUDPets.Models;
+﻿using AutoMapper;
+using BE_CRUDPets.Models;
+using BE_CRUDPets.Models.DTO;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,10 +12,13 @@ namespace BE_CRUDPets.Controllers
     public class PetController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        //AutoMapper
+        private readonly IMapper _mapper;
 
-        public PetController(ApplicationDbContext context)
+        public PetController(ApplicationDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         //Get all pets from database
@@ -23,7 +28,8 @@ namespace BE_CRUDPets.Controllers
             try
             {
                 var petList = await _context.Pets.ToListAsync();
-                return Ok(petList);
+                var petListDTO = _mapper.Map<IEnumerable<PetDTO>>(petList);
+                return Ok(petListDTO);
             }
             catch(Exception ex)
             {
@@ -42,7 +48,8 @@ namespace BE_CRUDPets.Controllers
                 {
                     return NotFound();
                 }
-                return Ok(pet);
+                var petDTO = _mapper.Map<PetDTO>(pet);
+                return Ok(petDTO);
             }
             catch(Exception e)
             {
@@ -71,14 +78,17 @@ namespace BE_CRUDPets.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] Pet pet)
+        public async Task<IActionResult> Post([FromBody] PetDTO petDTO)
         {
             try
             {
+                var pet = _mapper.Map<Pet>(petDTO);
                 pet.CreationDate = DateTime.Now;
                 _context.Add(pet);
                 await _context.SaveChangesAsync();
-                return CreatedAtAction("Get",new {id = pet.Id}, pet);
+
+                var petItemDTO = _mapper.Map<PetDTO>(pet);
+                return CreatedAtAction("Get",new {id = petItemDTO.Id}, petItemDTO);
             }
             catch(Exception e)
             {
@@ -87,15 +97,15 @@ namespace BE_CRUDPets.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(int id, Pet pet)
+        public async Task<IActionResult> Put(int id, PetDTO petDTO)
         {
             try
             {
+                var pet = _mapper.Map<Pet>(petDTO);
                 if (id != pet.Id)
                 {
                     return BadRequest();
                 }
-
                 var petItem = await _context.Pets.FindAsync(id);
                 if (petItem == null)
                 {
