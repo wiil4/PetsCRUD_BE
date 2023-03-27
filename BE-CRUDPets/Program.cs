@@ -1,4 +1,5 @@
 using BE_CRUDPets.Models;
+using BE_CRUDPets.Models.Repository;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,6 +26,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 //Automapper
 builder.Services.AddAutoMapper(typeof(Program));
+
+//Add Services for Indenpendency Injection
+builder.Services.AddScoped<IPetRepository, PetRepository>();
 
 var app = builder.Build();
 

@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using BE_CRUDPets.Models;
 using BE_CRUDPets.Models.DTO;
+using BE_CRUDPets.Models.Repository;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,15 +11,16 @@ namespace BE_CRUDPets.Controllers
     [Route("api/[controller]")]
     [ApiController]
     public class PetController : ControllerBase
-    {
-        private readonly ApplicationDbContext _context;
+    {        
         //AutoMapper
         private readonly IMapper _mapper;
 
-        public PetController(ApplicationDbContext context, IMapper mapper)
+        private readonly IPetRepository _petRepository;
+
+        public PetController( IMapper mapper, IPetRepository petRepository)
         {
-            _context = context;
             _mapper = mapper;
+            _petRepository = petRepository;
         }
 
         //Get all pets from database
@@ -27,7 +29,7 @@ namespace BE_CRUDPets.Controllers
         {
             try
             {
-                var petList = await _context.Pets.ToListAsync();
+                var petList = await _petRepository.GetPetsList();
                 var petListDTO = _mapper.Map<IEnumerable<PetDTO>>(petList);
                 return Ok(petListDTO);
             }
@@ -43,7 +45,7 @@ namespace BE_CRUDPets.Controllers
         {
             try
             {
-                var pet = await _context.Pets.FindAsync(id);
+                var pet = await _petRepository.GetPetById(id);
                 if(pet == null)
                 {
                     return NotFound();
@@ -62,13 +64,12 @@ namespace BE_CRUDPets.Controllers
         {
             try
             {
-                var pet = await _context.Pets.FindAsync(id);
+                var pet = await _petRepository.GetPetById(id);
                 if (pet == null)
                 {
                     return NotFound();
                 }
-                _context.Pets.Remove(pet);
-                await _context.SaveChangesAsync();
+                await _petRepository.DeletePet(pet);
                 return NoContent();
             }
             catch(Exception e)
@@ -83,10 +84,10 @@ namespace BE_CRUDPets.Controllers
             try
             {
                 var pet = _mapper.Map<Pet>(petDTO);
+                //Received as DTO and mapped to normal data in order to add CreationDate and Save it into DB
                 pet.CreationDate = DateTime.Now;
-                _context.Add(pet);
-                await _context.SaveChangesAsync();
-
+                pet = await _petRepository.AddPet(pet);
+                //Remaping as DTO in order to return the created object as a get resource from FE
                 var petItemDTO = _mapper.Map<PetDTO>(pet);
                 return CreatedAtAction("Get",new {id = petItemDTO.Id}, petItemDTO);
             }
@@ -106,18 +107,13 @@ namespace BE_CRUDPets.Controllers
                 {
                     return BadRequest();
                 }
-                var petItem = await _context.Pets.FindAsync(id);
+                var petItem = await _petRepository.GetPetById(id);
                 if (petItem == null)
                 {
                     return NotFound();
-                }
-                petItem.Name = pet.Name;
-                petItem.Race = pet.Race;
-                petItem.Color = pet.Color;
-                petItem.Age = pet.Age;
-                petItem.Weight = pet.Weight;
+                }                
 
-                await _context.SaveChangesAsync();
+                await _petRepository.UpdatePet(pet);
                 return NoContent();
             }
             catch(Exception e)
