@@ -16,6 +16,7 @@ namespace BE_CRUDPets.Controllers
             _context = context;
         }
 
+        //Get all pets from database
         [HttpGet]
         public async Task<IActionResult> Get()
         {
@@ -27,6 +28,25 @@ namespace BE_CRUDPets.Controllers
             catch(Exception ex)
             {
                 return BadRequest(ex.Message);
+            }
+        }
+
+        //Get specific pet based on the received parameter(id)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(int id)
+        {
+            try
+            {
+                var pet = await _context.Pets.FindAsync(id);
+                if(pet == null)
+                {
+                    return NotFound();
+                }
+                return Ok(pet);
+            }
+            catch(Exception e)
+            {
+                return BadRequest(e.Message);
             }
         }
 
